@@ -151,6 +151,12 @@
     if (evQueue.length) { body.ev = evQueue; evQueue = []; }
     if (final && JSON.stringify(body).length > 60000) body.pv.clicks = clicks.slice(-120);
     dirty = false;
+    // ページ離脱時はプリフライト不要な sendBeacon（text/plain）で確実に送る
+    if (final && navigator.sendBeacon) {
+      try {
+        if (navigator.sendBeacon(API + 'hm_beacon?apikey=' + APIKEY, new Blob([JSON.stringify(body)], { type: 'text/plain' }))) return;
+      } catch (e) {}
+    }
     rpc('hm_track', { p: body }, final).then(function (r) {
       if (r && r.limit) stopped = true;
     });
