@@ -151,7 +151,7 @@
     if (evQueue.length) { body.ev = evQueue; evQueue = []; }
     if (final && JSON.stringify(body).length > 60000) body.pv.clicks = clicks.slice(-120);
     dirty = false;
-    rpc('hm_track', body, final).then(function (r) {
+    rpc('hm_track', { p: body }, final).then(function (r) {
       if (r && r.limit) stopped = true;
     });
   }
