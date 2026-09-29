@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import { readFileSync, writeFileSync } from 'node:fs';
-const src = readFileSync(new URL('../../tracker/t.src.js', import.meta.url), 'utf8')
+const src = readFileSync(new URL('../tracker/t.src.js', import.meta.url), 'utf8')
   .replace('__SUPABASE_URL__', 'https://didhhgjaxdnwtwnbrrkk.supabase.co')
   .replace('__SUPABASE_KEY__', 'sb_publishable_5eAOWsn3yXNPPYZWtRldTg_vNnVWzoQ');
 writeFileSync('dist/t.src.js', src);
