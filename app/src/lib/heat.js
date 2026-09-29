@@ -9,7 +9,7 @@ const FRAME_CSS = `
 [data-aos],.aos-init,.wow,.fadein,.fade-in,.js-fade,.inview,.is-hidden-before{opacity:1!important;transform:none!important;visibility:visible!important}
 html{overflow-x:hidden!important}
 #__hm_ov{position:absolute;left:0;top:0;pointer-events:none;z-index:2147483646}
-#__hm_ov canvas{position:absolute;left:0;top:0;width:100%;height:100%}
+#__hm_ov img{position:absolute;left:0;top:0;width:100%;height:100%;max-width:none}
 #__hm_hl{position:absolute;pointer-events:none;z-index:2147483647;outline:3px solid #ff3d7f;background:rgba(255,61,127,.15);border-radius:4px;transition:none}
 .__hm_mark{position:absolute;left:0;right:0;border-top:2px dashed rgba(255,255,255,.95);z-index:2147483647;pointer-events:none}
 .__hm_mark span{position:absolute;left:8px;top:-13px;background:#111;color:#fff;font:600 12px/1 sans-serif;padding:6px 9px;border-radius:999px;white-space:nowrap}
@@ -107,21 +107,27 @@ function makeOverlay(doc) {
   ov.style.width = W + 'px';
   ov.style.height = H + 'px';
   const k = Math.min(1, 16000 / H, 12000000 / (W * H));
-  const canvas = doc.createElement('canvas');
+  // スクリプト無効のiframe内ではcanvasが描画されないため、親側で描いて画像として重ねる
+  const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(W * k));
   canvas.height = Math.max(1, Math.round(H * k));
-  ov.appendChild(canvas);
   (doc.body || doc.documentElement).appendChild(ov);
-  return { ov, canvas, ctx: canvas.getContext('2d'), W, H, k };
+  const commit = () => {
+    const img = doc.createElement('img');
+    img.alt = '';
+    img.src = canvas.toDataURL('image/png');
+    ov.appendChild(img);
+  };
+  return { ov, canvas, ctx: canvas.getContext('2d'), W, H, k, commit };
 }
 
 // ---------- 描画 ----------
 export function drawClick(doc, clicks, snapW) {
-  const { canvas, ctx, k, W, H } = makeOverlay(doc);
+  const { canvas, ctx, k, W, H, commit } = makeOverlay(doc);
   const pts = resolveClicks(doc, clicks, snapW);
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  if (!pts.length) return { points: 0 };
+  if (!pts.length) { commit(); return { points: 0 }; }
   // グリッド集計
   const cell = 4;
   const grid = new Map();
@@ -166,11 +172,12 @@ export function drawClick(doc, clicks, snapW) {
   }
   sctx.putImageData(img, 0, 0);
   ctx.drawImage(shadow, 0, 0);
+  commit();
   return { points: pts.length };
 }
 
 export function drawScroll(doc, scroll, n) {
-  const { canvas, ctx } = makeOverlay(doc);
+  const { canvas, ctx, commit } = makeOverlay(doc);
   const h = canvas.height;
   const grad = ctx.createLinearGradient(0, 0, 0, h);
   for (let i = 0; i < 100; i++) {
@@ -181,6 +188,7 @@ export function drawScroll(doc, scroll, n) {
   }
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, h);
+  commit();
   // 到達率ライン
   const { H } = docSize(doc);
   for (const th of [0.75, 0.5, 0.25]) {
@@ -199,7 +207,7 @@ export function drawScroll(doc, scroll, n) {
 }
 
 export function drawAttention(doc, attention) {
-  const { canvas, ctx } = makeOverlay(doc);
+  const { canvas, ctx, commit } = makeOverlay(doc);
   const h = canvas.height;
   const max = Math.max(1, ...attention.map(Number));
   const grad = ctx.createLinearGradient(0, 0, 0, h);
@@ -213,6 +221,7 @@ export function drawAttention(doc, attention) {
   }
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, h);
+  commit();
 }
 
 export function clearOverlay(doc) {
