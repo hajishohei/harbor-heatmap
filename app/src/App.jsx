@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { supabase, rpc, q } from './lib/supabase';
 import { useRoute, useAsync, go } from './lib/utils';
 import { Empty, Loading } from './components/ui';
@@ -56,7 +56,8 @@ function SiteLayout({ siteId, tab, route }) {
           ))}
         </nav>
       </div>
-      {body}
+      {/* サイト切替時に子ページの内部状態（フォーム値・選択URLなど）を持ち越さない */}
+      <Fragment key={s.id}>{body}</Fragment>
     </div>
   );
 }

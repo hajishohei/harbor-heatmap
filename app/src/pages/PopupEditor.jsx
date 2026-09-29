@@ -231,8 +231,8 @@ export default function PopupEditor({ site, popupId }) {
     setCrs(loaded.data.creatives.length ? loaded.data.creatives : [{ _new: true, name: 'A', type: 'image', image_url: '', html: '', link_url: '', alt: '', enabled: true }]);
   }, [loaded.data]);
 
-  if (loaded.loading || !p) return <Loading />;
   if (loaded.error) return <ErrorBox error={loaded.error} />;
+  if (loaded.loading || !p) return <Loading />;
 
   const set = (patch) => setP({ ...p, ...patch });
   const setT = (patch) => set({ triggers: { ...p.triggers, ...patch } });
@@ -406,7 +406,8 @@ export default function PopupEditor({ site, popupId }) {
             <div className="row gap-8">
               <input className="grow" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://" />
               <Btn disabled={!p.id || !previewUrl} onClick={() => {
-                const u = new URL(previewUrl);
+                let u;
+                try { u = new URL(previewUrl); } catch { setErr(new Error('URLの形式が正しくありません')); return; }
                 u.searchParams.set('hm_preview', p.id);
                 window.open(u.toString(), '_blank');
               }}>開く</Btn>

@@ -51,8 +51,11 @@ export function daysAgo(n) {
 }
 // 期間（YYYY-MM-DD, YYYY-MM-DD）→ RPC用の from/to（toは翌日0時）
 export function rangeToTs(from, to) {
-  const f = new Date(from + 'T00:00:00');
-  const t = new Date(to + 'T00:00:00');
+  // 日付入力が空・不正のとき（クリア操作など）に toISOString() が例外を投げないようにする
+  let f = new Date(from + 'T00:00:00');
+  let t = new Date(to + 'T00:00:00');
+  if (isNaN(f)) f = daysAgo(29);
+  if (isNaN(t)) t = daysAgo(0);
   t.setDate(t.getDate() + 1);
   return { p_from: f.toISOString(), p_to: t.toISOString() };
 }
@@ -62,7 +65,7 @@ export function defaultRange(days = 30) {
 
 // ---------- 表示 ----------
 export const fmt = (n) => (n == null || isNaN(n) ? '-' : Number(n).toLocaleString('ja-JP'));
-export const pct = (a, b, digits = 1) => (!b ? '-' : ((a / b) * 100).toFixed(digits) + '%');
+export const pct = (a, b, digits = 1) => (!Number(b) ? '-' : ((a / b) * 100).toFixed(digits) + '%');
 export const sec = (ms) => (ms == null ? '-' : ms >= 60000 ? `${Math.floor(ms / 60000)}分${Math.round((ms % 60000) / 1000)}秒` : `${Math.round(ms / 1000)}秒`);
 export const DEVICE_LABEL = { pc: 'PC', sp: 'スマホ', tab: 'タブレット' };
 export function shortUrl(u) {
